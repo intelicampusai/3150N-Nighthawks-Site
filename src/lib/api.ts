@@ -239,9 +239,39 @@ export async function getTeams(query: string = ''): Promise<Team[]> {
 }
 
 export async function getEvents(): Promise<Event[]> {
-    const apiEvents = await fetchFromApi<Event[]>(`/events?season=${SEASON_ID}`);
-    if (apiEvents) return apiEvents;
+    let allEvents: Event[] = [];
+    let page = 1;
+    let lastPage = 1;
 
+    // Loop to fetch all pages
+    do {
+        // Add a small delay between requests to be nice to the API
+        if (page > 1) await new Promise(resolve => setTimeout(resolve, 200));
+
+        const response = await fetchFromApi<any>(`/events?season=${SEASON_ID}&page=${page}`);
+
+        if (!response || !response.data) {
+            // If API fails or no data, stop. 
+            // If it's the first page and fails, we might want to return mock data?
+            if (page === 1 && allEvents.length === 0) break;
+            else break;
+        }
+
+        allEvents = allEvents.concat(response.data);
+
+        // RobotEvents API meta structure
+        if (response.meta?.last_page) {
+            lastPage = response.meta.last_page;
+        } else {
+            break; // No pagination info
+        }
+
+        page++;
+    } while (page <= lastPage && page <= 20); // Safety limit of 20 pages
+
+    if (allEvents.length > 0) return allEvents;
+
+    // Fallback to MOCK_EVENTS if simplified API call failed or returned nothing valid
     await new Promise(resolve => setTimeout(resolve, 500));
     return MOCK_EVENTS;
 }
