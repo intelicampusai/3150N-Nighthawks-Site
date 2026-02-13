@@ -56,6 +56,7 @@ export interface Match {
     scheduled: string;
     started?: string;
     field?: string;
+    name?: string;
     alliances: {
         red: { score: number; teams: { team: { id: number; name: string } }[] };
         blue: { score: number; teams: { team: { id: number; name: string } }[] };
