@@ -143,7 +143,7 @@ const MOCK_EVENTS: Event[] = [
     {
         id: 2,
         sku: 'RE-VRC-24-5678',
-        name: 'Ridley College Turning Point',
+        name: 'Ridley College Signature Event',
         start: '2026-02-14T08:00:00Z',
         end: '2026-02-14T17:00:00Z',
         season_id: 190,
@@ -152,6 +152,42 @@ const MOCK_EVENTS: Event[] = [
         division_ids: [1],
         status: 'active',
         livestream_url: 'https://youtube.com/live/example'
+    },
+    {
+        id: 3,
+        sku: 'RE-VRC-24-9999',
+        name: 'California State Championship',
+        start: '2026-03-15T08:00:00Z',
+        end: '2026-03-16T17:00:00Z',
+        season_id: 190,
+        location: { venue: 'Santa Clara Convention Center', city: 'Santa Clara', region: 'California' },
+        capacity: { max: 100, current: 45 },
+        division_ids: [1, 2],
+        status: 'future'
+    },
+    {
+        id: 4,
+        sku: 'RE-VRC-23-0001',
+        name: 'Kalahari Classic (Past)',
+        start: '2026-01-21T08:00:00Z',
+        end: '2026-01-22T17:00:00Z',
+        season_id: 190,
+        location: { venue: 'Kalahari Resorts', city: 'Sandusky', region: 'Ohio' },
+        capacity: { max: 200, current: 200 },
+        division_ids: [1, 2, 3],
+        status: 'past'
+    },
+    {
+        id: 5,
+        sku: 'RE-VRC-23-0002',
+        name: 'Asia-Pacific Championship (Past)',
+        start: '2025-12-10T08:00:00Z',
+        end: '2025-12-12T17:00:00Z',
+        season_id: 190,
+        location: { venue: 'Guangzhou International Center', city: 'Guangzhou', region: 'Guangdong' },
+        capacity: { max: 300, current: 300 },
+        division_ids: [1, 2, 3, 4],
+        status: 'past'
     }
 ];
 

@@ -26,22 +26,23 @@ export interface Team {
 }
 
 export interface Event {
-    id: number;
+    id?: number;
     sku: string;
     name: string;
     start: string;
     end: string;
-    season_id: number;
+    season_id?: number;
     location: {
         venue: string;
         city: string;
         region: string;
+        country?: string;
     };
-    capacity: {
+    capacity?: {
         max: number;
         current: number;
     };
-    division_ids: number[];
+    division_ids?: number[];
     status: 'active' | 'future' | 'past';
     livestream_url?: string;
 }

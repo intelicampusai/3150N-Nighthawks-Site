@@ -1,18 +1,21 @@
+import { getEvents } from "@/lib/api";
+import EventsClient from "./EventsClient";
 
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+export const metadata = {
+    title: "Events | V5 Hub",
+    description: "Browse upcoming and past VEX V5 robotics competitions.",
+};
 
-export default function EventsPage() {
+export default async function EventsPage() {
+    const events = await getEvents();
+
     return (
-        <div className="space-y-4">
-            <h1 className="text-2xl font-bold tracking-tight">Events</h1>
-            <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Under Construction</AlertTitle>
-                <AlertDescription>
-                    The events calendar and map view are coming soon.
-                </AlertDescription>
-            </Alert>
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-black tracking-tight">Competitions</h1>
+            </div>
+
+            <EventsClient initialEvents={events} />
         </div>
     );
 }
