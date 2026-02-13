@@ -293,15 +293,15 @@ export async function getSkillsStandings(): Promise<Team[]> {
 
 export async function getTopRegions(): Promise<string[]> {
     const teams = await getSkillsStandings();
-    const regions = new Set<string>();
+    const regionCounts: Record<string, number> = {};
 
     teams.forEach(team => {
-        if (team.region) {
-            regions.add(team.region);
-        } else if (team.country) {
-            regions.add(team.country);
+        const region = team.region || team.country;
+        if (region) {
+            regionCounts[region] = (regionCounts[region] || 0) + 1;
         }
     });
 
-    return Array.from(regions).sort();
+    // Sort regions by count descending (competitiveness)
+    return Object.keys(regionCounts).sort((a, b) => regionCounts[b] - regionCounts[a]);
 }
