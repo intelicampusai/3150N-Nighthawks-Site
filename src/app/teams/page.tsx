@@ -25,7 +25,7 @@ function TeamsContent() {
     const [qualifiedTeamNumbers, setQualifiedTeamNumbers] = useState<Set<string> | null>(null);
 
     useEffect(() => {
-        if (showQualified && !qualifiedTeamNumbers) {
+        if (showQualified && qualifiedTeamNumbers === null) {
             setLoading(true);
             getWorldsQualifiedTeams().then(teams => {
                 setQualifiedTeamNumbers(teams);
@@ -45,7 +45,7 @@ function TeamsContent() {
     useEffect(() => {
         const fetchTeams = async () => {
             // If filter is enabled but data not loaded yet, wait (the other effect handles loading it)
-            if (showQualified && !qualifiedTeamNumbers) return;
+            if (showQualified && qualifiedTeamNumbers === null) return;
 
             setLoading(true);
             try {

@@ -398,15 +398,20 @@ export async function getWorldsQualifiedTeams(): Promise<Set<string>> {
     const qualifiedTeams = new Set<string>();
 
     if (worldsEvents.length === 0) {
-        // Fallback for mock/dev if no API key or no events found
-        // If we are using MOCK_TEAMS, let's assume some are qualified
-        if (!process.env.ROBOTEVENTS_TOKEN) {
-            MOCK_TEAMS.forEach(t => {
-                if (t.skills && t.skills.rank <= 10) qualifiedTeams.add(t.number);
-            });
-            // Also add 3150N specifically if not caught
-            qualifiedTeams.add("3150N");
+        // Fallback: If no Worlds event is found, consider the top 100 skills teams as qualified.
+        try {
+            const topTeams = await getSkillsStandings();
+            topTeams.forEach(t => qualifiedTeams.add(t.number));
+        } catch (e) {
+            console.warn("Failed to fetch skills standings for fallback", e);
         }
+
+        // Also add 3150N specifically if not caught
+        qualifiedTeams.add("3150N");
+        // And 252A and 3150D for MS
+        qualifiedTeams.add("252A");
+        qualifiedTeams.add("3150D");
+
         return qualifiedTeams;
     }
 
