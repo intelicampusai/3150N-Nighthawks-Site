@@ -45,8 +45,11 @@ export function TeamCard({ team, compact = false }: TeamCardProps) {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-sm text-muted-foreground mb-4 truncate">
+                    <div className="text-sm text-muted-foreground mb-1 truncate">
                         {team.name} <span className="text-xs opacity-50">• {team.organization}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mb-4 truncate opacity-80">
+                        {team.region}, {team.country}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 text-sm">
