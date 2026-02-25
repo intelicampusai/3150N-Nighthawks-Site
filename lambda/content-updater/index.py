@@ -106,20 +106,16 @@ def fetch_worlds_teams(api_key: str, season_id: int) -> set:
     """Fetch the set of team numbers registered for the World Championship."""
     qualified_teams = set()
     
-    # First, find the Worlds event(s)
-    events_url = f"{RE_API_BASE}/events?season[]={season_id}&per_page=100"
+    # First, find the Worlds event(s) using the native level[]=World query
+    events_url = f"{RE_API_BASE}/events?season[]={season_id}&level[]=World&per_page=100"
     events_data = api_request(events_url, api_key)
     if not events_data or 'data' not in events_data:
         return qualified_teams
         
-    worlds_events = []
-    for evt in events_data['data']:
-        name = evt.get('name', '')
-        if "World Championship" in name and ("V5RC" in name or "VRC" in name):
-            worlds_events.append(evt)
+    worlds_events = events_data.get('data', [])
             
     if not worlds_events:
-        logger.warning("No World Championship events found for this season.")
+        logger.warning("No World Championship events found for this season via level[]=World API query.")
         return qualified_teams
         
     # Then fetch teams for each
