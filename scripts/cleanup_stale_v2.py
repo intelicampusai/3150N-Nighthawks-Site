@@ -33,10 +33,14 @@ def cleanup_stale_v2(table_name, profile):
             is_stale = False
             
             if pk.startswith('TEAM#'):
-                if len(parts) == 4:
+                # New format: MATCH#SKU#DIV#ROUND#INST#NUM (6 parts)
+                # Anything else is stale (4 parts was the previous stale format, 3 parts is the timestamp format)
+                if len(parts) != 6:
                     is_stale = True
             elif pk.startswith('EVENT#'):
-                if len(parts) == 3:
+                # New format: MATCH#DIV#ROUND#INST#NUM (5 parts)
+                # Anything else is stale (3 parts was the previous stale format)
+                if len(parts) != 5:
                     is_stale = True
             
             # Extra check for division 100 which was mis-assigned by the old script
