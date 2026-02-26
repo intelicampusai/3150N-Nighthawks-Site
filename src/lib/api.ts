@@ -221,29 +221,10 @@ export async function getTeams(query: string = ''): Promise<Team[]> {
 }
 
 export async function getEvents(): Promise<Event[]> {
-    let allEvents: Event[] = [];
-    let page = 1;
-    let lastPage = 1;
+    const data = await fetchFromApi<any>(`/events?season=${SEASON_ID}`);
 
-    // Loop to fetch all pages
-    do {
-        // Add a small delay between requests to be nice to the API
-        if (page > 1) await new Promise(resolve => setTimeout(resolve, 200));
-
-        const response = await fetchFromApi<any>(`/events?season=${SEASON_ID}&page=${page}`);
-
-        if (!response || !response.data) {
-            // If API fails or no data, stop. 
-            // If it's the first page and fails, we might want to return mock data?
-            if (page === 1 && allEvents.length === 0) break;
-            else break;
-        }
-
-        if (page === 1 && response.data && response.data.length > 0) {
-            // console.log("DEBUG EVENT DATA:", JSON.stringify(response.data[0], null, 2));
-        }
-
-        const events = response.data.map((item: any) => ({
+    if (data && Array.isArray(data)) {
+        return data.map((item: any) => ({
             id: item.id,
             sku: item.sku,
             name: item.name,
@@ -253,25 +234,12 @@ export async function getEvents(): Promise<Event[]> {
             location: item.location,
             capacity: item.capacity,
             division_ids: item.division_ids,
-            status: item.status || 'future', // Fallback
+            status: item.status || 'future',
             livestream_url: item.livestream_url,
-            // Try to find grade level
-            grade: item.level || item.grade_level || (item.program ? item.program.grade_level : undefined)
+            grade: item.level || item.grade_level || (item.program ? item.program.grade_level : undefined),
+            match_count: item.match_count
         }));
-
-        allEvents = allEvents.concat(events);
-
-        // RobotEvents API meta structure
-        if (response.meta?.last_page) {
-            lastPage = response.meta.last_page;
-        } else {
-            break; // No pagination info
-        }
-
-        page++;
-    } while (page <= lastPage && page <= 20); // Safety limit of 20 pages
-
-    if (allEvents.length > 0) return allEvents;
+    }
 
     // Fallback to MOCK_EVENTS if simplified API call failed or returned nothing valid
     await new Promise(resolve => setTimeout(resolve, 500));

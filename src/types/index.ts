@@ -47,6 +47,7 @@ export interface Event {
     status: 'active' | 'future' | 'past';
     livestream_url?: string;
     grade?: string;
+    match_count?: number;
 }
 
 export interface Match {

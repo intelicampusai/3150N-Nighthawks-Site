@@ -212,7 +212,7 @@ def update_matches(api_key: str) -> int:
 
             # Only write event source-of-truth once per unique match
             if match_key not in seen_matches:
-                _write_event_match_item(match, sku, evt_name)
+                _write_event_match_item(match, sku, evt_name, evt_meta)
                 seen_matches.add(match_key)
                 total_matches += 1
 
@@ -222,10 +222,11 @@ def update_matches(api_key: str) -> int:
     return total_matches
 
 
-def _write_event_match_item(match: dict, sku: str, evt_name: str):
+def _write_event_match_item(match: dict, sku: str, evt_name: str, evt_meta: dict = None):
     """Write the event-owned source-of-truth match item.
     PK: EVENT#{sku}  SK: MATCH#{div_id}#{match_num:04d}
     """
+    if evt_meta is None: evt_meta = {}
     div_id = match.get('division', {}).get('id', 1)
     match_num = match.get('matchnum', 0)
     round_num = match.get('round', 0)
@@ -263,6 +264,22 @@ def _write_event_match_item(match: dict, sku: str, evt_name: str):
     item = {k: v for k, v in item.items() if v is not None}
     try:
         table.put_item(Item=item)
+        
+        # Increment match_count on the metadata item
+        table.update_item(
+            Key={'PK': f'EVENT#{sku}', 'SK': 'METADATA'},
+            UpdateExpression="ADD match_count :inc",
+            ExpressionAttributeValues={':inc': Decimal('1')}
+        )
+
+        # Increment match_count on the seasonal event item (used in lists)
+        start_date = evt_meta.get('start')
+        if start_date:
+            table.update_item(
+                Key={'PK': f'SEASON#{SEASON_ID}', 'SK': f'EVENT#{start_date}#{sku}'},
+                UpdateExpression="ADD match_count :inc",
+                ExpressionAttributeValues={':inc': Decimal('1')}
+            )
     except Exception as e:
         logger.error(f"Error writing event match {sku}/{match_sk}: {e}")
 

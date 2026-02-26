@@ -186,9 +186,17 @@ function EventCard({ event, isPast }: { event: Event; isPast?: boolean }) {
                     <span className="line-clamp-1">{event.location.city}, {event.location.region}</span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t mt-2">
-                    <div className="flex items-center text-xs text-muted-foreground">
-                        <Users className="h-3.5 w-3.5 mr-1" />
-                        <span>{event.capacity ? `${event.capacity.current}/${event.capacity.max}` : "N/A"} Teams</span>
+                    <div className="flex flex-col space-y-1">
+                        <div className="flex items-center text-xs text-muted-foreground">
+                            <Users className="h-3.5 w-3.5 mr-1" />
+                            <span>{event.capacity ? `${event.capacity.current}/${event.capacity.max}` : "N/A"} Teams</span>
+                        </div>
+                        {event.match_count && event.match_count > 0 && (
+                            <div className="flex items-center text-xs text-amber-600 font-medium">
+                                <Search className="h-3.5 w-3.5 mr-1" />
+                                <span>{event.match_count} Matches</span>
+                            </div>
+                        )}
                     </div>
                     <Button variant="ghost" size="sm" className="h-7 text-xs px-2" asChild>
                         <Link

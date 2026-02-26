@@ -113,14 +113,19 @@ def get_event_matches(sku: str):
     return response(200, resp.get('Items', []))
 
 def get_events(params: dict):
-    season_id = params.get('season', '190')
+    season_id = params.get('season', os.environ.get('SEASON_ID', '197'))
     
     resp = table.query(
         KeyConditionExpression=Key('PK').eq(f'SEASON#{season_id}') & Key('SK').begins_with('EVENT#'),
-        Limit=50
+        Limit=100
     )
+    events = resp.get('Items', [])
     
-    return response(200, resp.get('Items', []))
+    # Optional: If events don't have match_count, we could do a quick check, 
+    # but for list views we prefer it to be pre-calculated.
+    # For now, we just pass through what's in DynamoDB.
+    
+    return response(200, events)
 
 def response(status_code: int, body: Any) -> dict:
     return {
