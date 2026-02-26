@@ -37,6 +37,12 @@ export function TeamCard({ team, compact = false }: TeamCardProps) {
                                 Rank #{team.stats.rank}
                             </Badge>
                         )}
+                        {team.worlds_qualified && (
+                            <Badge variant="secondary" className="text-xs px-2 py-0 h-5 bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800 gap-1">
+                                <Trophy className="h-3 w-3" />
+                                <span className="hidden sm:inline">Qualified</span>
+                            </Badge>
+                        )}
                         {team.skills && (
                             <Badge variant="outline" className="text-xs px-2 py-0 h-5 border-blue-200 text-blue-700 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
                                 Skills #{team.skills.rank}
