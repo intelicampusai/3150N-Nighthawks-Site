@@ -126,12 +126,19 @@ function TeamsContent() {
 
                     <div className="flex bg-muted rounded-md p-1 gap-1">
                         <Button
-                            variant={selectedGrade === "All" ? "default" : "outline"}
-                            onClick={() => handleGradeFilter('All')}
+                            variant={!showQualified && selectedGrade === "All" ? "default" : "outline"}
+                            onClick={() => {
+                                setShowQualified(false);
+                                handleGradeFilter('All');
+                            }}
                             className="h-8"
+                            title="Show all teams from all grades"
                         >
-                            All
+                            All Teams
                         </Button>
+                    </div>
+
+                    <div className="flex bg-muted rounded-md p-1 gap-1">
                         <Button
                             variant={selectedGrade === "High School" ? "default" : "outline"}
                             onClick={() => handleGradeFilter('High School')}
@@ -150,12 +157,17 @@ function TeamsContent() {
 
                     <Button
                         variant={showQualified ? "default" : "outline"}
-                        onClick={() => setShowQualified(!showQualified)}
+                        onClick={() => {
+                            if (!showQualified) {
+                                // Turning on Qualified mode
+                            }
+                            setShowQualified(!showQualified);
+                        }}
                         className="gap-2"
                         title="Show World Championship Qualified Teams Only"
                     >
                         <Trophy className="h-4 w-4" />
-                        Worlds Qualified
+                        Qualified
                     </Button>
                 </div>
             </div>
