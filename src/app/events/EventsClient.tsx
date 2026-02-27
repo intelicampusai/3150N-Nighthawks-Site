@@ -25,65 +25,99 @@ interface EventsClientProps {
 }
 
 export default function EventsClient({ initialEvents, topRegions = [] }: EventsClientProps) {
-    const [selectedRegion, setSelectedRegion] = useState<string>('All Regions');
-
+    const [selectedLevel, setSelectedLevel] = useState<string>('All');
+    const [selectedCountry, setSelectedCountry] = useState<string>('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedUpcoming, setExpandedUpcoming] = useState(true);
     const [expandedPast, setExpandedPast] = useState(false);
 
-    // Sort: topRegions first (competitiveness), then other event regions sorted alphabetically
-    const topRegionsSet = new Set(topRegions);
-    const eventRegions = Array.from(new Set(initialEvents.map(e => e.location.region)))
-        .filter(r => r && !topRegionsSet.has(r))
-        .sort();
-
-    const regions = ['All Regions', ...topRegions, ...eventRegions];
+    // Filter Options
+    const levelOptions = ['All', 'Signature', 'Regional', 'National', 'World'];
+    const countryOptions = ['All', 'United States', 'China', 'Canada', 'Australia', 'Europe'];
 
     // Filter events
     const filteredEvents = initialEvents.filter(event => {
-        const matchesRegion = selectedRegion === 'All Regions' || event.location.region === selectedRegion;
-        const matchesSearch = event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            event.location.city.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesRegion && matchesSearch;
+        // Search filter (High priority)
+        const searchLower = searchQuery.toLowerCase();
+        const matchesSearch = !searchQuery ||
+            event.name.toLowerCase().includes(searchLower) ||
+            event.location.city.toLowerCase().includes(searchLower) ||
+            event.sku.toLowerCase().includes(searchLower);
+
+        // If search query is used, we often want it to be broad, but here let's combine it
+        if (searchQuery && !matchesSearch) return false;
+
+        // Level filtering
+        const matchesLevel = selectedLevel === 'All' ||
+            (event.level === selectedLevel) ||
+            (selectedLevel === 'Regional' && event.name.includes('Region')) ||
+            (selectedLevel === 'National' && event.name.includes('National')) ||
+            (selectedLevel === 'World' && event.name.includes('World'));
+
+        // Country filtering
+        const matchesCountry = selectedCountry === 'All' ||
+            event.location.country === selectedCountry ||
+            (selectedCountry === 'United States' && (event.location.country === 'USA' || event.location.country === 'US' || event.location.country === 'United States'));
+
+        return matchesLevel && matchesCountry;
     });
 
-    // Current time for splitting
-    const now = new Date();
+    // Current split point: 12 hours ago to catch currently active events
+    const splitPoint = new Date(new Date().getTime() - 12 * 60 * 60 * 1000);
 
-    const upcomingEvents = filteredEvents.filter(e => new Date(e.end) >= now)
+    const upcomingEvents = filteredEvents.filter(e => new Date(e.end) >= splitPoint)
         .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
-    const pastEvents = filteredEvents.filter(e => new Date(e.end) < now)
+    const pastEvents = filteredEvents.filter(e => new Date(e.end) < splitPoint)
         .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime());
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-muted/30 p-4 rounded-xl border">
-                <div className="relative w-full md:w-72">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search events..."
-                        className="pl-9 bg-background"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+            <div className="flex flex-col gap-4 bg-muted/30 p-4 rounded-xl border">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="relative w-full md:w-72">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by SKU or name..."
+                            className="pl-9 bg-background"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="flex items-center space-x-2 w-full md:w-auto p-1 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
+                        <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="flex space-x-1">
+                            {countryOptions.map(country => (
+                                <Button
+                                    key={country}
+                                    variant={selectedCountry === country ? "default" : "outline"}
+                                    size="sm"
+                                    className="whitespace-nowrap px-3 h-8 text-[11px] rounded-full"
+                                    onClick={() => setSelectedCountry(country)}
+                                >
+                                    {country}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex items-center space-x-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                    <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <div className="flex space-x-2">
-                        {regions.map(region => (
-                            <Button
-                                key={region}
-                                variant={selectedRegion === region ? "default" : "outline"}
-                                size="sm"
-                                className="whitespace-nowrap px-3 h-8 text-xs rounded-full"
-                                onClick={() => setSelectedRegion(region)}
-                            >
-                                {region}
-                            </Button>
-                        ))}
-                    </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mr-2">Levels:</span>
+                    {levelOptions.map(level => (
+                        <Button
+                            key={level}
+                            variant={selectedLevel === level ? "default" : "outline"}
+                            size="sm"
+                            className="whitespace-nowrap px-3 h-8 text-[11px] rounded-full"
+                            onClick={() => setSelectedLevel(level)}
+                        >
+                            {level === 'Regional' ? 'Region Championship' :
+                                level === 'National' ? 'National Championship' :
+                                    level === 'World' ? 'World Championship' : level}
+                        </Button>
+                    ))}
                 </div>
             </div>
 
@@ -164,6 +198,11 @@ function EventCard({ event, isPast }: { event: Event; isPast?: boolean }) {
                     {event.grade && (
                         <Badge variant="outline" className="ml-2 font-mono text-[10px] uppercase">
                             {event.grade.replace('High School', 'HS').replace('Middle School', 'MS').replace('College', 'VU').replace('Elementary School', 'ES')}
+                        </Badge>
+                    )}
+                    {event.level && event.level !== 'Other' && (
+                        <Badge variant="secondary" className="ml-2 font-mono text-[10px] uppercase bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">
+                            {event.level}
                         </Badge>
                     )}
                     {event.livestream_url && !isPast && (

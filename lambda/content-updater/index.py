@@ -77,57 +77,65 @@ def update_events(api_key: str):
     # Fetch recent past events (last 60 days) + upcoming events
     from datetime import timedelta
     sixty_days_ago = (datetime.now(timezone.utc) - timedelta(days=60)).strftime('%Y-%m-%d')
-    url = f"{RE_API_BASE}/events?season[]={SEASON_ID}&start={sixty_days_ago}&per_page=100"
-    data = api_request(url, api_key)
-    if not data or 'data' not in data: return
+    
+    page = 1
+    last_page = 1
+    while page <= last_page and page <= 20: # Safety limit of 20 pages
+        url = f"{RE_API_BASE}/events?season[]={SEASON_ID}&start={sixty_days_ago}&per_page=100&page={page}"
+        data = api_request(url, api_key)
+        if not data or 'data' not in data: break
 
-    for evt in data['data']:
-        sku = evt.get('sku')
-        start_date = evt.get('start', '')
-        level = evt.get('level', '')
-        
-        item = {
-            'PK': f'SEASON#{SEASON_ID}',
-            'SK': f'EVENT#{start_date}#{sku}',
-            'sku': sku,
-            'name': evt.get('name'),
-            'level': level,
-            'start': start_date,
-            'end': evt.get('end'),
-            'location': {
+        for evt in data['data']:
+            sku = evt.get('sku')
+            start_date = evt.get('start', '')
+            level = evt.get('level', '')
+            
+            item = {
+                'PK': f'SEASON#{SEASON_ID}',
+                'SK': f'EVENT#{start_date}#{sku}',
+                'sku': sku,
+                'name': evt.get('name'),
+                'level': level,
+                'start': start_date,
+                'end': evt.get('end'),
+                'location': {
+                    'venue': evt.get('location', {}).get('venue'),
+                    'city': evt.get('location', {}).get('city'),
+                    'region': evt.get('location', {}).get('region'),
+                    'country': evt.get('location', {}).get('country')
+                },
+                'status': 'future',
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
+            
+            # Status logic
+            now = datetime.now(timezone.utc).isoformat()
+            if start_date <= now <= evt.get('end', ''):
+                item['status'] = 'active'
+            elif evt.get('end', '') < now:
+                item['status'] = 'past'
+                
+            table.put_item(Item=item)
+
+            # Also store SKU metadata for reverse-lookup enrichment
+            meta_item = {
+                'PK': f'EVENT#{sku}',
+                'SK': 'METADATA',
+                'sku': sku,
+                'name': evt.get('name'),
+                'level': level,
+                'start': start_date,
+                'end': evt.get('end'),
                 'venue': evt.get('location', {}).get('venue'),
                 'city': evt.get('location', {}).get('city'),
                 'region': evt.get('location', {}).get('region'),
-                'country': evt.get('location', {}).get('country')
-            },
-            'status': 'future',
-            'updated_at': datetime.now(timezone.utc).isoformat()
-        }
-        
-        # Status logic
-        now = datetime.now(timezone.utc).isoformat()
-        if start_date <= now <= evt.get('end', ''):
-            item['status'] = 'active'
-        elif evt.get('end', '') < now:
-            item['status'] = 'past'
-            
-        table.put_item(Item=item)
+                'country': evt.get('location', {}).get('country'),
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
+            table.put_item(Item=meta_item)
 
-        # Also store SKU metadata for reverse-lookup enrichment
-        meta_item = {
-            'PK': f'EVENT#{sku}',
-            'SK': 'METADATA',
-            'sku': sku,
-            'name': evt.get('name'),
-            'start': start_date,
-            'end': evt.get('end'),
-            'venue': evt.get('location', {}).get('venue'),
-            'city': evt.get('location', {}).get('city'),
-            'region': evt.get('location', {}).get('region'),
-            'country': evt.get('location', {}).get('country'),
-            'updated_at': datetime.now(timezone.utc).isoformat()
-        }
-        table.put_item(Item=meta_item)
+        last_page = data.get('meta', {}).get('last_page', 1)
+        page += 1
 
 def update_matches(api_key: str) -> int:
     """Fetch match results for top teams at Signature and Regional events.

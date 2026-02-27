@@ -236,7 +236,8 @@ export async function getEvents(): Promise<Event[]> {
             division_ids: item.division_ids,
             status: item.status || 'future',
             livestream_url: item.livestream_url,
-            grade: item.level || item.grade_level || (item.program ? item.program.grade_level : undefined),
+            grade: item.grade_level || item.grade,
+            level: item.level || 'Other',
             match_count: item.match_count
         }));
     }

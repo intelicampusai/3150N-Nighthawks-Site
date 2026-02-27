@@ -117,7 +117,7 @@ def get_events(params: dict):
     
     resp = table.query(
         KeyConditionExpression=Key('PK').eq(f'SEASON#{season_id}') & Key('SK').begins_with('EVENT#'),
-        Limit=100
+        Limit=500
     )
     events = resp.get('Items', [])
     
