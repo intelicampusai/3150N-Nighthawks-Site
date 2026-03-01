@@ -257,7 +257,16 @@ export async function getTeam(number: string): Promise<Team | undefined> {
 
 export async function getMatches(teamNumber: string): Promise<Match[]> {
     const apiMatches = await fetchFromApi<Match[]>(`/teams/${teamNumber}/matches`);
-    if (apiMatches && Array.isArray(apiMatches)) return apiMatches;
+    if (apiMatches && Array.isArray(apiMatches)) {
+        // Filter out matches from previous seasons based on SEASON_ID
+        // 197 is 2025-2026, its SKUs contain '-25-'
+        // 190 is 2024-2025, its SKUs contain '-24-'
+        const seasonYearSuffix = SEASON_ID === "197" ? "-25-" : SEASON_ID === "190" ? "-24-" : "";
+        if (seasonYearSuffix) {
+            return apiMatches.filter(m => m.sku && m.sku.includes(seasonYearSuffix));
+        }
+        return apiMatches;
+    }
     return [];
 }
 

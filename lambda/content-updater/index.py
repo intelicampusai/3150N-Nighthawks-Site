@@ -357,10 +357,26 @@ def fetch_worlds_teams(api_key: str, season_id: int) -> set:
         skus = [s.strip() for s in WORLDS_SKUS.split(',') if s.strip()]
         for sku in skus:
             logger.info(f"Fetching teams for specific Worlds SKU: {sku}")
+            
+            # Step 1: Resolve SKU to event ID via /events?sku[]=...
+            event_lookup_url = f"{RE_API_BASE}/events?sku[]={sku}"
+            event_data = api_request(event_lookup_url, api_key)
+            if not event_data or 'data' not in event_data or len(event_data['data']) == 0:
+                logger.warning(f"Could not resolve SKU {sku} to event ID, skipping.")
+                continue
+            
+            evt_id = event_data['data'][0].get('id')
+            if not evt_id:
+                logger.warning(f"No event ID found for SKU {sku}, skipping.")
+                continue
+            
+            logger.info(f"Resolved SKU {sku} to event ID {evt_id}")
+            
+            # Step 2: Fetch teams using the resolved event ID
             page = 1
             last_page = 1
             while page <= last_page and page <= 50:
-                teams_url = f"{RE_API_BASE}/events/{sku}/teams?page={page}"
+                teams_url = f"{RE_API_BASE}/events/{evt_id}/teams?page={page}&per_page=250"
                 teams_data = api_request(teams_url, api_key)
                 if not teams_data or 'data' not in teams_data:
                     break
@@ -370,11 +386,14 @@ def fetch_worlds_teams(api_key: str, season_id: int) -> set:
                 last_page = teams_data.get('meta', {}).get('last_page', 1)
                 page += 1
         
-        if qualified_teams:
-            logger.info(f"Found {len(qualified_teams)} teams from specific SKUs.")
-            return qualified_teams
+        # When WORLDS_SKUS is explicitly configured, always return here.
+        # Do NOT fall through to the legacy fallback — an empty result simply
+        # means no teams are registered yet for the configured Worlds events.
+        logger.info(f"Found {len(qualified_teams)} teams from specific SKUs.")
+        return qualified_teams
 
     # Fallback/Legacy: find the Worlds event(s) using the native level[]=World query
+    # Only used when WORLDS_SKUS is not configured at all.
     events_url = f"{RE_API_BASE}/events?season[]={season_id}&level[]=World&per_page=100"
     events_data = api_request(events_url, api_key)
     if not events_data or 'data' not in events_data:
@@ -401,7 +420,7 @@ def fetch_worlds_teams(api_key: str, season_id: int) -> set:
         last_page = 1
         
         while page <= last_page and page <= 50: # Safety limit
-            teams_url = f"{RE_API_BASE}/events/{evt_id}/teams?page={page}"
+            teams_url = f"{RE_API_BASE}/events/{evt_id}/teams?page={page}&per_page=250"
             teams_data = api_request(teams_url, api_key)
             
             if not teams_data or 'data' not in teams_data:
